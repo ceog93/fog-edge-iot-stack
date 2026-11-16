@@ -1,0 +1,3 @@
+[submodule "firmware/esp32-mq2"]
+	path = firmware/esp32-mq2
+	url = https://github.com/ceog93/iot-esp32-mq2-gas-smoke-detector.git
