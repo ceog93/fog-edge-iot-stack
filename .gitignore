@@ -218,3 +218,26 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+# --- Docker ---
+.docker/
+docker-compose.override.yml
+.env
+.env.local
+*.env
+
+# --- Contenedores y Volúmenes de Datos ---
+volumes/
+data/
+db_data/
+logs/
+*.log
+
+# --- PlatformIO / IoT (si aplica localmente en el stack) ---
+.pio/
+.pioenvs/
+.piolibdeps/
+build/
+firmware/**/*.bin
+firmware/**/*.elf
