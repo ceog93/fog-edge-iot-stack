@@ -23,6 +23,20 @@
   let dirty = false;
   let pollInFlight = false;
   let actionVersion = 0;
+  let monitoring = null;
+
+  function monitoringError() {
+    const notice = byId("charts-error");
+    notice.textContent = "No se pudo inicializar el monitoreo. La configuración y la tabla siguen disponibles; recarga el panel para reintentar.";
+    notice.hidden = false;
+    monitoring = null;
+  }
+
+  try {
+    monitoring = new window.ESP32Charts.MonitoringCharts(document, window.Chart);
+  } catch {
+    monitoringError();
+  }
 
   class ApiError extends Error {
     constructor(message, status = 0) {
@@ -92,6 +106,7 @@
     stopButton.textContent = busy === "stop" ? "Deteniendo…" : "■  Detener";
     form.setAttribute("aria-busy", String(Boolean(busy)));
     byId("config-mode").textContent = !online ? "Sin conexión a la API" : busy ? "Procesando" : stopped ? "Editable" : "Bloqueada";
+    byId("config-mode").classList.toggle("is-active", online && stopped && !busy);
     byId("config-help").textContent = !online
       ? "Los controles estarán disponibles cuando la API responda."
       : !stopped
@@ -162,13 +177,13 @@
     mqttNotice.hidden = !missingConnections;
     document.body.classList.remove("is-stale");
     const labels = { stopped: "Detenida", starting: "Iniciando", running: "En ejecución", stopping: "Deteniendo" };
-    setBadge("run-status", labels[data.status], data.status === "running" ? "success" : data.status === "stopped" ? "" : "warning");
+    setBadge("run-status", labels[data.status], data.status === "stopped" ? "" : "active");
     if (data.connected_nodes === data.node_count) {
-      setBadge("broker-status", "Conectado", "success");
+      setBadge("broker-status", "Conectado", "active");
     } else if (data.connected_nodes > 0) {
-      setBadge("broker-status", `Parcial · ${data.connected_nodes}/${data.node_count}`, "warning");
+      setBadge("broker-status", `Parcial · ${data.connected_nodes}/${data.node_count}`);
     } else {
-      setBadge("broker-status", data.status === "stopped" ? "Sin conexiones" : "Sin conexión", data.status === "stopped" ? "" : "warning");
+      setBadge("broker-status", data.status === "stopped" ? "Sin conexiones" : "Sin conexión");
     }
     byId("connected-count").textContent = formatNumber.format(data.connected_nodes);
     byId("total-count").textContent = `/ ${formatNumber.format(data.node_count)}`;
@@ -180,18 +195,27 @@
     if (forceSync || !dirty || data.status !== "stopped") syncInputs(data);
     updateRows(data.nodes);
     updateControls();
+    if (monitoring) {
+      try {
+        // Mutation responses refresh the UI; traffic samples use GET polls only.
+        monitoring.update(data, { sampleTraffic: !forceSync });
+      } catch {
+        monitoringError();
+      }
+    }
   }
 
   function showOffline(error) {
     online = false;
+    monitoring?.markOffline();
     byId("mqtt-notice").hidden = true;
     const alert = byId("connection-alert");
     const message = `${error.message} Se reintentará automáticamente.${latest ? " Los datos visibles corresponden a la última sincronización." : ""}`;
     if (alert.textContent !== message) alert.textContent = message;
     alert.hidden = false;
     document.body.classList.add("is-stale");
-    setBadge("run-status", "Sin datos actuales", "warning");
-    setBadge("broker-status", "Sin datos", "warning");
+    setBadge("run-status", "Sin datos actuales");
+    setBadge("broker-status", "Sin datos");
     updateControls();
   }
 

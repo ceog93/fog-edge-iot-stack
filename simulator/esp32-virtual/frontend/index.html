@@ -4,22 +4,22 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Panel de control de nodos ESP32 virtuales para simulación de telemetría MQTT.">
-  <title>Simulador ESP32 · Edge / Fog</title>
+  <title>ESP32 Virtual · Edge / Fog</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css">
+  <script src="vendor/chart.umd.min.js" defer></script>
+  <script src="monitoring-data.js" defer></script>
+  <script src="charts.js" defer></script>
   <script src="script.js" defer></script>
 </head>
 <body>
   <main class="dashboard">
     <header class="page-header">
       <div class="brand">
-        <div class="brand-icon" aria-hidden="true">
-          <svg viewBox="0 0 32 32" fill="none"><rect x="8" y="8" width="16" height="16" rx="3"/><rect x="12" y="12" width="8" height="8" rx="1"/><path d="M12 4v4m8-4v4M12 24v4m8-4v4M4 12h4m-4 8h4m16-8h4m-4 8h4"/></svg>
-        </div>
+        <div class="terminal-mark" aria-hidden="true">&gt;_</div>
         <div>
-          <p class="eyebrow">LABORATORIO EDGE / FOG</p>
-          <h1>Simulador ESP32</h1>
-          <p class="subtitle">Nodos virtuales · Telemetría MQTT</p>
+          <h1>ESP32 Virtual</h1>
+          <p class="subtitle">Edge / Fog · MQTT Simulator</p>
         </div>
       </div>
       <div class="header-status" aria-label="Estado del sistema">
@@ -93,6 +93,59 @@
         <p class="metric-value" id="error-count">—</p>
         <p class="metric-note">Conexión y publicación MQTT</p>
       </article>
+    </section>
+
+    <section class="monitoring" aria-labelledby="monitoring-title">
+      <div class="section-heading monitoring-heading">
+        <div><h2 id="monitoring-title">Monitoreo</h2><p>Historial temporal de esta sesión del navegador.</p></div>
+        <span class="refresh-label" id="monitoring-status">Esperando datos de la API</span>
+      </div>
+      <div id="charts-error" class="notice notice-error" role="alert" hidden></div>
+      <div class="charts-grid">
+        <article class="panel chart-panel adc-panel" aria-labelledby="adc-title">
+          <div class="chart-heading">
+            <h3 id="adc-title">Lecturas ADC</h3>
+            <div class="device-selector">
+              <label for="chart-device" class="sr-only">Dispositivo para la gráfica ADC</label>
+              <select id="chart-device" disabled><option value="">Sin dispositivos</option></select>
+            </div>
+          </div>
+          <div class="chart-meta"><span id="adc-summary">Hasta 60 lecturas por dispositivo</span><span class="connection-state" id="chart-mqtt">Sin datos MQTT</span></div>
+          <div class="chart-area">
+            <div class="canvas-host"><canvas id="adc-chart" role="img" aria-label="Sin lecturas ADC" hidden>Gráfica de lecturas ADC del dispositivo seleccionado.</canvas></div>
+            <div id="adc-empty" class="chart-empty"><strong>Aún no hay lecturas</strong><span>Inicia la simulación o selecciona otro nodo.</span></div>
+          </div>
+          <div class="chart-footer"><span><i class="legend-line" aria-hidden="true"></i>ADC observado</span><span><i class="legend-line threshold-line" aria-hidden="true"></i>Umbral actual: <b id="threshold-value">—</b></span></div>
+        </article>
+
+        <article class="panel chart-panel" aria-labelledby="traffic-title">
+          <div class="chart-heading"><h3 id="traffic-title">Tráfico MQTT</h3><span id="traffic-rate" class="rate-label">—</span></div>
+          <div class="chart-meta"><span>Mensajes enviados por segundo</span></div>
+          <div class="chart-area">
+            <div class="canvas-host"><canvas id="traffic-chart" role="img" aria-label="Sin muestras de tráfico MQTT" hidden>Gráfica del tráfico observado a partir del contador de mensajes enviados.</canvas></div>
+            <div id="traffic-empty" class="chart-empty"><strong>Sin muestras de tráfico</strong><span>Se necesitan dos consultas durante una ejecución.</span></div>
+          </div>
+          <div class="chart-footer"><span>Hasta 60 muestras · Δ mensajes / Δ tiempo</span></div>
+        </article>
+
+        <article class="panel chart-panel states-panel" aria-labelledby="states-title">
+          <div class="chart-heading"><h3 id="states-title">Estados de dispositivos</h3></div>
+          <div class="chart-meta"><span>Último estado ADC · independiente de MQTT</span></div>
+          <div class="chart-area states-area">
+            <div id="states-visual" class="donut-visual" hidden>
+              <div class="canvas-host"><canvas id="states-chart" role="img" aria-label="Sin datos de dispositivos">Distribución de nodos normales, en alarma y sin lectura.</canvas></div>
+              <div class="donut-center" aria-hidden="true"><strong id="states-total">—</strong><span>nodos</span></div>
+            </div>
+            <div id="states-empty" class="chart-empty"><strong>Sin dispositivos</strong><span>Esperando información del servidor.</span></div>
+          </div>
+          <ul class="state-legend" aria-label="Resumen de estados ADC">
+            <li><span><i class="legend-dot normal-dot" aria-hidden="true"></i>Normal</span><b id="states-normal">—</b></li>
+            <li><span><i class="legend-dot alarm-dot" aria-hidden="true"></i>Alarma</span><b id="states-alarm">—</b></li>
+            <li><span><i class="legend-dot unread-dot" aria-hidden="true"></i>Sin lectura</span><b id="states-unread">—</b></li>
+          </ul>
+        </article>
+      </div>
+      <p class="monitoring-note">Las curvas muestran muestras observadas por la API, no todas las publicaciones MQTT. Al detener, se conserva el historial. Un nodo desconectado mantiene su último estado ADC.</p>
     </section>
 
     <section class="panel devices" aria-labelledby="devices-title">

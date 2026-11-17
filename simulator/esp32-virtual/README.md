@@ -1,7 +1,7 @@
 # Simulador ESP32 virtual — Fases 1 y 2
 
 Simulador independiente de nodos ESP32/MQ-2 con backend Python 3.12+, FastAPI,
-Paho MQTT 2.1 y panel HTML/CSS/JavaScript sin dependencias de frontend.
+Paho MQTT 2.1 y panel HTML/CSS/JavaScript con Chart.js 4.6.1 servido localmente.
 No necesita la infraestructura principal.
 
 Al iniciar la API se crean 10 nodos con ubicación e identificador propios, pero
@@ -19,7 +19,7 @@ docker compose up -d --build
 docker compose logs -f frontend backend mqtt-test
 ```
 
-Abre el **panel en http://localhost:8080**. Esto conserva el nombre de proyecto
+Abre el **panel en http://localhost:8085**. Esto conserva el nombre de proyecto
 Compose `esp32-virtual-phase1` para mantener la continuidad con la Fase 1.
 El backend está en `http://127.0.0.1:8000` y el broker en `127.0.0.1:1884`.
 El panel consulta `/api/status` cada segundo, configura e inicia con
@@ -47,6 +47,77 @@ docker compose up -d --build --no-deps frontend
 Los datos viven en memoria del backend. **Recrear o reiniciar su contenedor sí
 los pierde**, incluido al instalar por primera vez el código nuevo de la Fase 2.
 Actualizar solo el frontend conserva el proceso del backend.
+
+## Monitoreo e identidad visual
+
+El encabezado usa un símbolo de terminal `>_`, fondo `#0F172A` y el nombre
+**ESP32 Virtual**. Azul `#2563EB` identifica controles y conexiones activas;
+verde identifica lecturas normales, rojo alarmas y gris nodos desconectados o
+sin lectura. Configuración, controles, tabla y proxy Nginx–FastAPI se conservan.
+Esta actualización no necesita cambios en el backend ni en MQTT.
+
+Entre los indicadores y la tabla se incluyen tres gráficas Chart.js:
+
+- **Lecturas ADC:** selector de dispositivo y hasta 60 lecturas distintas
+  observadas por nodo, con hora UTC del mensaje, puntos verdes/rojos según su
+  estado publicado y línea roja discontinua del umbral **actual**. El eje muestra
+  las horas en la zona local del navegador. No se recalifica el estado histórico
+  al cambiar el umbral. MQTT conectado/desconectado se indica por separado.
+- **Tráfico MQTT:** `(contador actual − contador anterior) / segundos reales
+  transcurridos`, usando `performance.now()` entre consultas GET correctas.
+  La primera consulta solo establece la referencia; no inventa una tasa inicial.
+  Se conservan hasta 60 puntos, incluidas separaciones por datos ausentes.
+- **Estados de dispositivos:** dona con nodos normales, en alarma y sin lectura,
+  basada en el último `estado` ADC recibido. Un nodo desconectado puede seguir
+  figurando como normal o en alarma. La leyenda también presenta las cantidades
+  como texto para no depender del color ni del canvas.
+
+El polling continúa cada segundo y nunca genera lecturas ficticias. Se ignoran
+timestamps repetidos o atrasados; dos timestamps distintos en el mismo
+milisegundo se conservan. Los datos se guardan solo en memoria de esta pestaña:
+recargar la página borra el historial del navegador, sin alterar el backend;
+la primera consulta recupera la última lectura que el backend conserve.
+Retirar un dispositivo de la configuración elimina su curva local para limitar
+la memoria; la configuración del backend sigue conservando sus propios datos.
+
+Al detener se mantienen ADC, estados y curvas; la curva de tráfico deja de
+desplazarse tras la muestra final y el indicador de tasa puede mostrar cero
+cuando dos consultas confirman que el contador no cambió. Ante una caída de API
+se mantienen las gráficas atenuadas, se invalida la referencia de tráfico y se
+esperan dos consultas correctas para calcular otra tasa. Un contador que
+disminuye (por ejemplo, tras reiniciar el backend) establece otra referencia,
+sin tasas negativas; la curva muestra un corte, no datos interpolados del hueco.
+
+El endpoint ofrece solo la última lectura de cada nodo. Si publica más rápido
+que el polling de un segundo, la curva **no puede recuperar cada publicación**;
+muestra las lecturas observadas, hasta 60 por nodo. La tasa corresponde al
+contador local de envíos QoS 0, no a confirmaciones de recepción del broker.
+
+Las instancias Chart.js se reutilizan, se actualizan sin animación y las curvas
+ADC/dona solo se redibujan si cambian los datos correspondientes. La librería,
+su licencia MIT y la procedencia/integridad se incluyen en `frontend/vendor/`;
+no hay llamadas a CDN ni instalación npm para servir el panel. Si Chart.js no
+carga, se muestra un aviso y los controles y la tabla siguen disponibles.
+Se emplean los mecanismos oficiales de [actualización](https://www.chartjs.org/docs/latest/developers/updates.html)
+y [contenedores responsivos](https://www.chartjs.org/docs/latest/configuration/responsive.html).
+
+Pruebas del monitoreo, desde `simulator/esp32-virtual/frontend/`, con Node.js
+disponible (solo para pruebas; no requerido en la imagen Nginx):
+
+```powershell
+node --test tests/monitoring.test.cjs tests/charts.test.cjs
+```
+
+Cubren deduplicación, memoria limitada, selección de dispositivo, tasa con
+intervalos reales, reinicios de contador, huecos de API, conservación al detener,
+estados ADC independientes de MQTT, estados vacíos, umbral vigente y reutilización
+de gráficas. No sustituyen una revisión visual en navegador.
+
+Verificación de esta actualización: **21 pruebas de frontend y 79 de backend
+aprobadas**; construcción/actualización exclusiva del frontend con Docker;
+recursos de monitoreo y `/api/status` disponibles en 8085; backend y su estado
+conservados. La revisión visual de escritorio/móvil queda pendiente porque
+el acceso de navegador de la herramienta no estuvo disponible.
 
 El broker local permite clientes anónimos y MQTT TCP sin TLS, tiene persistencia
 desactivada y una ACL que solo permite leer/escribir en `simulacion/#`.
@@ -260,5 +331,5 @@ backend que ya estaba en ejecución se conservó intacto.
 La revisión visual en navegador de escritorio y móvil queda pendiente porque
 la herramienta de navegador no estuvo disponible y no se autorizó acceso a Chrome.
 
-Quedan fuera de esta fase las pruebas masivas, gráficos, integración con
+Quedan fuera de esta fase las pruebas masivas, integración con
 Node-RED/Home Assistant/Proxmox y la reproducción exacta del firmware físico.
