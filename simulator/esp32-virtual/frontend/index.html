@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Panel de control de nodos ESP32 virtuales para simulación de telemetría MQTT.">
+  <title>Simulador ESP32 · Edge / Fog</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <main class="dashboard">
+    <header class="page-header">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none"><rect x="8" y="8" width="16" height="16" rx="3"/><rect x="12" y="12" width="8" height="8" rx="1"/><path d="M12 4v4m8-4v4M12 24v4m8-4v4M4 12h4m-4 8h4m16-8h4m-4 8h4"/></svg>
+        </div>
+        <div>
+          <p class="eyebrow">LABORATORIO EDGE / FOG</p>
+          <h1>Simulador ESP32</h1>
+          <p class="subtitle">Nodos virtuales · Telemetría MQTT</p>
+        </div>
+      </div>
+      <div class="header-status" aria-label="Estado del sistema">
+        <div><span class="status-label">Simulación</span><span class="badge" id="run-status">Cargando…</span></div>
+        <div><span class="status-label">Broker MQTT</span><span class="badge" id="broker-status">Sin datos</span></div>
+      </div>
+    </header>
+
+    <div id="connection-alert" class="notice notice-error" role="alert" hidden></div>
+    <div id="mqtt-notice" class="notice notice-warning" role="status" hidden></div>
+    <noscript><div class="notice notice-error">Activa JavaScript para consultar la API y controlar la simulación.</div></noscript>
+
+    <section class="panel configuration" aria-labelledby="config-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="config-title">Configuración</h2>
+          <p>Define las condiciones de la próxima ejecución.</p>
+        </div>
+        <span class="tag" id="config-mode">Esperando API</span>
+      </div>
+      <form id="simulation-form">
+        <fieldset id="configuration-fields" disabled>
+          <legend class="sr-only">Parámetros de simulación</legend>
+          <div class="fields-grid">
+            <div class="field">
+              <label for="node-count">Número de nodos</label>
+              <div class="input-wrap"><input id="node-count" name="node_count" type="number" min="1" max="100" step="1" value="10" required aria-describedby="nodes-hint"><span>nodos</span></div>
+              <small id="nodes-hint">De 1 a 100 dispositivos</small>
+            </div>
+            <div class="field">
+              <label for="interval">Intervalo de publicación</label>
+              <div class="input-wrap"><input id="interval" name="interval_seconds" type="number" min="0" max="3600" step="any" value="2" required aria-describedby="interval-hint"><span>s</span></div>
+              <small id="interval-hint">Mayor que 0 · Hasta 3600 s</small>
+            </div>
+            <div class="field">
+              <label for="threshold">Umbral de alarma</label>
+              <div class="input-wrap"><input id="threshold" name="alarm_threshold" type="number" min="0" max="4094" step="1" value="1500" required aria-describedby="threshold-hint"><span>ADC</span></div>
+              <small id="threshold-hint">Alarma si ADC &gt; umbral · 0–4094</small>
+            </div>
+            <div class="field">
+              <label for="probability">Probabilidad de alarma</label>
+              <div class="input-wrap"><input id="probability" name="alarm_probability" type="number" min="0" max="100" step="any" value="10" required aria-describedby="probability-hint"><span>%</span></div>
+              <small id="probability-hint">Por nodo y por lectura · 0–100 %</small>
+            </div>
+          </div>
+        </fieldset>
+        <div class="configuration-footer">
+          <p id="config-help">Consultando la configuración del servidor…</p>
+          <div class="actions">
+            <button id="start-button" class="button button-primary" type="submit" disabled><span aria-hidden="true">▶</span> Iniciar simulación</button>
+            <button id="stop-button" class="button button-secondary" type="button" disabled><span aria-hidden="true">■</span> Detener</button>
+          </div>
+        </div>
+        <p id="action-feedback" class="action-feedback" role="status" aria-live="polite" hidden></p>
+      </form>
+    </section>
+
+    <section class="metrics" aria-label="Indicadores de la simulación">
+      <article class="panel metric">
+        <p class="metric-label">Nodos conectados</p>
+        <p class="metric-value"><span id="connected-count">—</span><span class="metric-total" id="total-count"></span></p>
+        <p class="metric-note">Conexiones MQTT activas</p>
+      </article>
+      <article class="panel metric">
+        <p class="metric-label">Mensajes enviados</p>
+        <p class="metric-value" id="sent-count">—</p>
+        <p class="metric-note">Acumulados en este proceso · QoS 0</p>
+      </article>
+      <article class="panel metric">
+        <p class="metric-label">Errores registrados</p>
+        <p class="metric-value" id="error-count">—</p>
+        <p class="metric-note">Conexión y publicación MQTT</p>
+      </article>
+    </section>
+
+    <section class="panel devices" aria-labelledby="devices-title">
+      <div class="section-heading devices-heading">
+        <div><h2 id="devices-title">Dispositivos virtuales <span class="count-tag" id="device-count">—</span></h2><p>Última lectura generada por cada nodo.</p></div>
+        <span class="refresh-label"><span class="small-dot" aria-hidden="true"></span>Actualización cada segundo</span>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <caption class="sr-only">Lecturas y conexión de los nodos ESP32 virtuales</caption>
+          <thead><tr><th scope="col">Dispositivo</th><th scope="col">Ubicación</th><th scope="col">Último ADC</th><th scope="col">Estado de lectura</th><th scope="col">Conexión MQTT</th></tr></thead>
+          <tbody id="devices-body"><tr class="placeholder-row"><td colspan="5">Esperando información del servidor…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="devices-footer"><span>Lecturas simuladas · ADC de 0 a 4095</span><span id="last-update">Sin sincronizar</span></div>
+    </section>
+
+    <footer class="page-footer"><span>Entorno de pruebas independiente</span><span>Solo telemetría · Sin control de actuadores</span></footer>
+  </main>
+
+  <template id="device-row">
+    <tr>
+      <th scope="row" data-label="Dispositivo" class="device-id"></th>
+      <td data-label="Ubicación" class="device-location"></td>
+      <td data-label="Último ADC" class="device-adc"></td>
+      <td data-label="Estado de lectura"><span class="badge reading-status"></span></td>
+      <td data-label="Conexión MQTT"><span class="connection-state"></span></td>
+    </tr>
+  </template>
+</body>
+</html>

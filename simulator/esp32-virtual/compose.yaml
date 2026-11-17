@@ -1,0 +1,53 @@
+name: esp32-virtual-phase1
+
+services:
+  mqtt-test:
+    image: eclipse-mosquitto:2.0
+    ports:
+      - "127.0.0.1:1884:1883"
+    volumes:
+      - ./mqtt-test/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./mqtt-test/acl:/mosquitto/config/acl:ro
+    networks:
+      - simulation
+    healthcheck:
+      test: ["CMD", "mosquitto_pub", "-h", "127.0.0.1", "-t", "simulacion/health", "-m", "ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build: ./backend
+    init: true
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      MQTT_HOST: ${MQTT_HOST:-mqtt-test}
+      MQTT_PORT: ${MQTT_PORT:-1883}
+      MQTT_USERNAME: ${MQTT_USERNAME:-}
+      MQTT_PASSWORD: ${MQTT_PASSWORD:-}
+      SIM_NODE_COUNT: ${SIM_NODE_COUNT:-10}
+      SIM_INTERVAL_SECONDS: ${SIM_INTERVAL_SECONDS:-2}
+      SIM_ALARM_PROBABILITY: ${SIM_ALARM_PROBABILITY:-0.1}
+      SIM_ALARM_THRESHOLD: ${SIM_ALARM_THRESHOLD:-1500}
+      SIM_DEVICE_PREFIX: ${SIM_DEVICE_PREFIX:-esp32-virtual}
+      SIM_LOCATION_PREFIX: ${SIM_LOCATION_PREFIX:-laboratorio}
+    depends_on:
+      mqtt-test:
+        condition: service_healthy
+    networks:
+      - simulation
+    stop_grace_period: 30s
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "127.0.0.1:8085:80"
+    depends_on:
+      - backend
+    networks:
+      - simulation
+
+networks:
+  simulation:
+    driver: bridge
