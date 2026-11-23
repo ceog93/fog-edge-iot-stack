@@ -257,6 +257,8 @@ secrets.yaml
 **/secrets.yaml
 mosquitto/config/pwfile
 
-homeassistant/config/
+!homeassistant/config/
+homeassistant/config/*
+!homeassistant/config/configuration.yaml
 mosquitto/config/
 mosquitto/config/mosquitto.conf
