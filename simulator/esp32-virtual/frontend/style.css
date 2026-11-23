@@ -89,6 +89,15 @@ tbody th { font-weight: 500; }
 .connection-state { display: inline-flex; align-items: center; gap: 7px; color: #7c8790; font-size: 11px; white-space: nowrap; }
 .connection-state.is-connected { color: #2563EB; }
 .placeholder-row td { text-align: center; color: var(--muted); padding: 36px; }
+.gas-switch { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; cursor: pointer; }
+.gas-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.gas-switch span { width: 34px; height: 18px; border-radius: 9px; background: #cbd5e1; position: relative; transition: background 120ms ease; }
+.gas-switch span::after { content: ""; width: 12px; height: 12px; border-radius: 50%; background: #fff; position: absolute; top: 3px; left: 3px; box-shadow: 0 1px 2px rgba(15, 23, 42, .25); transition: transform 120ms ease; }
+.gas-switch input:checked + span { background: #dc2626; }
+.gas-switch input:checked + span::after { transform: translateX(16px); }
+.gas-switch input:focus-visible + span { outline: 2px solid #2563eb; outline-offset: 2px; }
+.gas-switch input:disabled + span { opacity: .5; cursor: not-allowed; }
+.gas-switch small { font-size: 10px; color: var(--muted); }
 .devices-footer { display: flex; justify-content: space-between; gap: 12px; padding: 14px 26px; border-top: 1px solid var(--border); font-size: 10px; color: var(--muted); background: #fcfdfe; }
 .page-footer { display: flex; justify-content: space-between; gap: 12px; font-size: 10px; color: #7f8a94; padding: 22px 2px 0; }
 .notice { border: 1px solid #eacbd0; padding: 13px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 12px; }

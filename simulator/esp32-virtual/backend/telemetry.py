@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 
 ADC_MAX = 4095
 ALARM_THRESHOLD = 1500
+BASELINE_MIN = 50
+BASELINE_MAX = 200
 
 
 def validate_threshold(threshold: int):
@@ -19,13 +21,17 @@ def evaluate_state(adc: int, threshold: int = ALARM_THRESHOLD) -> str:
     return "alarma" if adc > threshold else "normal"
 
 
-def generate_adc(alarm_probability: float, rng: random.Random, threshold: int = ALARM_THRESHOLD) -> int:
+def generate_adc(alarm_probability: float, rng: random.Random, threshold: int = ALARM_THRESHOLD, manual_alarm: bool = False) -> int:
     validate_threshold(threshold)
     if not 0 <= alarm_probability <= 1:
         raise ValueError("alarm_probability debe estar entre 0 y 1")
-    if rng.random() < alarm_probability:
+    if manual_alarm or rng.random() < alarm_probability:
         return rng.randint(threshold + 1, ADC_MAX)
-    return rng.randint(0, threshold)
+
+    normal_max = min(BASELINE_MAX, threshold)
+    if normal_max < BASELINE_MIN:
+        return rng.randint(0, threshold)
+    return rng.randint(BASELINE_MIN, normal_max)
 
 
 def make_reading(device_id: str, location: str, adc: int, threshold: int = ALARM_THRESHOLD) -> dict:

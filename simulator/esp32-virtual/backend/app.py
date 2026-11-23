@@ -12,6 +12,12 @@ from config import MAX_INTERVAL_SECONDS, MAX_NODE_COUNT, Settings
 from simulation import ConfigurationConflict, Simulation
 
 
+class GasDetectionParameters(BaseModel):
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False, strict=True)
+
+    enabled: bool
+
+
 class SimulationParameters(BaseModel):
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False, strict=True)
 
@@ -59,6 +65,15 @@ def create_app(settings: Settings | None = None, client_factory=None) -> FastAPI
         except Exception:
             logging.getLogger("esp32_simulator").exception("No se pudo iniciar la simulación")
             raise HTTPException(status_code=503, detail="No se pudo iniciar la simulación; consulte los logs") from None
+
+    @api.post("/nodes/{device_id}/gas-detection")
+    async def set_gas_detection(request: Request, device_id: str, parameters: GasDetectionParameters):
+        simulation = request.app.state.simulation
+        for node in simulation._node_pool:
+            if node.device_id == device_id:
+                node.set_manual_alarm(parameters.enabled)
+                return {"device_id": device_id, "manual_alarm": parameters.enabled}
+        raise HTTPException(status_code=404, detail="Nodo no encontrado")
 
     @api.post("/simulation/stop")
     async def stop(request: Request):

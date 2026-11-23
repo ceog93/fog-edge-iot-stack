@@ -142,6 +142,29 @@ def test_start_stop_restart_and_actual_publication_contract(mqtt_factory):
     assert all(client.stops == 2 for client in clients)  # lifespan shutdown
 
 
+def test_manual_gas_detection_is_persistent_per_node(mqtt_factory):
+    factory, clients = mqtt_factory
+    settings = Settings(node_count=2, interval_seconds=0.02, alarm_probability=0)
+    with TestClient(create_app(settings, factory)) as api:
+        api.post("/simulation/start")
+        wait_until(lambda: all(client.publications for client in clients))
+
+        response = api.post("/nodes/esp32-virtual-001/gas-detection", json={"enabled": True})
+        assert response.status_code == 200
+        assert response.json()["manual_alarm"] is True
+
+        wait_until(lambda: len(clients[0].publications) >= 2 and all(
+            json.loads(payload)["estado"] == "alarma"
+            and json.loads(payload)["adc"] > 1500
+            for _, payload, _, _ in clients[0].publications[-2:]
+        ))
+
+        assert 50 <= json.loads(clients[1].publications[-1][1])["adc"] <= 200
+
+        api.post("/nodes/esp32-virtual-001/gas-detection", json={"enabled": False})
+        wait_until(lambda: json.loads(clients[0].publications[-1][1])["adc"] <= 200)
+
+
 def test_broker_unavailable_does_not_block_api_and_can_recover(mqtt_factory):
     factory, clients = mqtt_factory
     app = create_app(Settings(node_count=1, interval_seconds=0.02), factory)

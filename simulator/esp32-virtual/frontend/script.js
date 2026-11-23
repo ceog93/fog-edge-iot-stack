@@ -140,6 +140,7 @@
           adc: element.querySelector(".device-adc"),
           reading: element.querySelector(".reading-status"),
           connection: element.querySelector(".connection-state"),
+          gasDetection: element.querySelector(".gas-detection"),
         };
         rowCache.set(node.device_id, row);
       }
@@ -153,6 +154,9 @@
       row.connection.textContent = node.connected ? "Conectado" : "Desconectado";
       row.connection.className = `connection-state${node.connected ? " is-connected" : ""}`;
       row.connection.title = node.last_error || "";
+      row.gasDetection.checked = Boolean(node.manual_alarm);
+      row.gasDetection.disabled = !online;
+      row.gasDetection.setAttribute("aria-label", `Detección de gas para ${node.device_id}`);
     }
     const newOrder = JSON.stringify(nodes.map((node) => node.device_id));
     if (newOrder !== rowOrder) {
@@ -275,6 +279,27 @@
   });
   stopButton.addEventListener("click", () => {
     if (latest?.status === "running") runAction("stop");
+  });
+  byId("devices-body").addEventListener("change", async (event) => {
+    const checkbox = event.target.closest(".gas-detection");
+    if (!checkbox || !online) return;
+    const row = checkbox.closest("tr");
+    const deviceId = row.querySelector(".device-id").textContent;
+    checkbox.disabled = true;
+    try {
+      await request(`/nodes/${encodeURIComponent(deviceId)}/gas-detection`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: checkbox.checked }),
+      });
+      feedback(checkbox.checked ? `Alarma de gas activada para ${deviceId}.` : `Alarma de gas desactivada para ${deviceId}.`);
+      await refreshStatus();
+    } catch (error) {
+      checkbox.checked = !checkbox.checked;
+      feedback(error.message, true);
+    } finally {
+      checkbox.disabled = false;
+    }
   });
 
   // Loading or refreshing this page only reads state. Never auto-start or stop.

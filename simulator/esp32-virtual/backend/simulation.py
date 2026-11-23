@@ -33,6 +33,7 @@ class VirtualNode:
         self._lock = threading.RLock()
         self._active = False
         self._connected = False
+        self.manual_alarm = False
         self.generated = 0
         self.accepted = 0
         self.sent = 0
@@ -115,11 +116,22 @@ class VirtualNode:
                 with self._lock:
                     self._connected = False
 
+    def set_manual_alarm(self, enabled: bool):
+        with self._lock:
+            self.manual_alarm = enabled
+
     def publish_reading(self):
         try:
+            with self._lock:
+                manual_alarm = self.manual_alarm
             reading = make_reading(
                 self.device_id, self.location,
-                generate_adc(self.settings.alarm_probability, self._rng, self.settings.alarm_threshold),
+                generate_adc(
+                    self.settings.alarm_probability,
+                    self._rng,
+                    self.settings.alarm_threshold,
+                    manual_alarm,
+                ),
                 self.settings.alarm_threshold,
             )
             with self._lock:
@@ -150,6 +162,7 @@ class VirtualNode:
                 "client_id": self.client_id,
                 "topic": self.topic,
                 "connected": self._connected,
+                "manual_alarm": self.manual_alarm,
                 "generated": self.generated,
                 "messages_accepted": self.accepted,
                 "messages_sent": self.sent,

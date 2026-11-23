@@ -156,8 +156,8 @@
       <div class="table-wrapper">
         <table>
           <caption class="sr-only">Lecturas y conexión de los nodos ESP32 virtuales</caption>
-          <thead><tr><th scope="col">Dispositivo</th><th scope="col">Ubicación</th><th scope="col">Último ADC</th><th scope="col">Estado de lectura</th><th scope="col">Conexión MQTT</th></tr></thead>
-          <tbody id="devices-body"><tr class="placeholder-row"><td colspan="5">Esperando información del servidor…</td></tr></tbody>
+          <thead><tr><th scope="col">Dispositivo</th><th scope="col">Ubicación</th><th scope="col">Último ADC</th><th scope="col">Estado de lectura</th><th scope="col">Conexión MQTT</th><th scope="col">Detección de gas</th></tr></thead>
+          <tbody id="devices-body"><tr class="placeholder-row"><td colspan="6">Esperando información del servidor…</td></tr></tbody>
         </table>
       </div>
       <div class="devices-footer"><span>Lecturas simuladas · ADC de 0 a 4095</span><span id="last-update">Sin sincronizar</span></div>
@@ -173,6 +173,7 @@
       <td data-label="Último ADC" class="device-adc"></td>
       <td data-label="Estado de lectura"><span class="badge reading-status"></span></td>
       <td data-label="Conexión MQTT"><span class="connection-state"></span></td>
+      <td data-label="Detección de gas"><label class="gas-switch"><input type="checkbox" class="gas-detection"><span aria-hidden="true"></span><small>Activar alarma</small></label></td>
     </tr>
   </template>
 </body>
