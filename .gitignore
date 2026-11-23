@@ -249,3 +249,14 @@ firmware/**/*.elf
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+
+# Variables de entorno y secretos
+.env
+*.env
+secrets.yaml
+**/secrets.yaml
+mosquitto/config/pwfile
+
+homeassistant/config/
+mosquitto/config/
+mosquitto/config/mosquitto.conf
