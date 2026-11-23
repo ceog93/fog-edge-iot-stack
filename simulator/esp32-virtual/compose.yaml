@@ -1,28 +1,32 @@
 name: esp32-virtual-phase1
 
 services:
-  mqtt-test:
-    image: eclipse-mosquitto:2.0
-    ports:
-      - "127.0.0.1:1884:1883"
-    volumes:
-      - ./mqtt-test/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
-      - ./mqtt-test/acl:/mosquitto/config/acl:ro
-    networks:
-      - simulation
-    healthcheck:
-      test: ["CMD", "mosquitto_pub", "-h", "127.0.0.1", "-t", "simulacion/health", "-m", "ok"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
+  # Broker de pruebas aislado (comentado mientras se usa mosquitto en fog_net)
+  # mqtt-test:
+  #   image: eclipse-mosquitto:2.0
+  #   ports:
+  #     - "127.0.0.1:1884:1883"
+  #   volumes:
+  #     - ./mqtt-test/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+  #     - ./mqtt-test/acl:/mosquitto/config/acl:ro
+  #   networks:
+  #     - simulation
+  #   healthcheck:
+  #     test: ["CMD", "mosquitto_pub", "-h", "127.0.0.1", "-t", "simulacion/health", "-m", "ok"]
+  #     interval: 5s
+  #     timeout: 3s
+  #     retries: 5
 
   backend:
     build: ./backend
     init: true
+    env_file:
+      - .env
     ports:
-      - "127.0.0.1:8000:8000"
+      #- "127.0.0.1:8000:8000"
+      - "127.0.0.1:8001:8000"
     environment:
-      MQTT_HOST: ${MQTT_HOST:-mqtt-test}
+      MQTT_HOST: ${MQTT_HOST:-mosquitto}
       MQTT_PORT: ${MQTT_PORT:-1883}
       MQTT_USERNAME: ${MQTT_USERNAME:-}
       MQTT_PASSWORD: ${MQTT_PASSWORD:-}
@@ -32,22 +36,27 @@ services:
       SIM_ALARM_THRESHOLD: ${SIM_ALARM_THRESHOLD:-1500}
       SIM_DEVICE_PREFIX: ${SIM_DEVICE_PREFIX:-esp32-virtual}
       SIM_LOCATION_PREFIX: ${SIM_LOCATION_PREFIX:-laboratorio}
-    depends_on:
-      mqtt-test:
-        condition: service_healthy
+    # depends_on:
+    #   mqtt-test:
+    #     condition: service_healthy
     networks:
-      - simulation
+      #- simulation
+      - fog_net
     stop_grace_period: 30s
 
   frontend:
     build: ./frontend
     ports:
-      - "127.0.0.1:8085:80"
+      - "8085:80"
     depends_on:
       - backend
     networks:
-      - simulation
+      #- simulation
+      - fog_net
 
 networks:
-  simulation:
-    driver: bridge
+  fog_net:
+    external: true
+  # Red aislada opcional (comentada; por ahora se usa fog_net)
+  # simulation:
+  #   driver: bridge
