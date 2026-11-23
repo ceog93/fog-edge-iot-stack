@@ -1,0 +1,17 @@
+services:
+  nodered:
+    image: nodered/node-red:latest
+    container_name: nodered
+    restart: unless-stopped
+    ports:
+      - "1880:1880"
+    environment:
+      - TZ=America/Bogota
+    volumes:
+      - ./data:/data
+    networks:
+      - fog_net
+
+networks:
+  fog_net:
+    external: true
