@@ -1,0 +1,19 @@
+name: fog-homeassistant
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: homeassistant
+    restart: unless-stopped
+    privileged: true
+    environment:
+      TZ: America/Bogota
+    volumes:
+      - ./config:/config
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "8123:8123"
+    networks:
+      - fog_net
+networks:
+  fog_net:
+    external: true
