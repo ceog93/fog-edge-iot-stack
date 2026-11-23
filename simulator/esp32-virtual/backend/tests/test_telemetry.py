@@ -18,7 +18,7 @@ def test_invalid_adc(adc):
         evaluate_state(adc)
 
 
-@pytest.mark.parametrize("probability,low,high", [(0, 50, 200), (1, 1501, 4095), (0.5, 50, 4095)])
+@pytest.mark.parametrize("probability,low,high", [(0, 50, 200), (1, 3000, 4095), (0.5, 50, 4095)])
 def test_adc_generation_range_and_alarm_modes(probability, low, high):
     rng = random.Random(42)
     values = [generate_adc(probability, rng) for _ in range(1000)]
@@ -34,10 +34,24 @@ def test_invalid_alarm_probability(probability):
         generate_adc(probability, random.Random(1))
 
 
+def test_preventive_mode_changes_state_without_changing_adc():
+    rng = random.Random(25)
+    adc = generate_adc(0, rng)
+    payload = make_reading("test-002", "sala", adc, preventive_mode=True)
+    assert 50 <= payload["adc"] <= 200
+    assert payload["estado"] == "alarma preventiva"
+
+
+def test_preventive_state_is_not_based_on_adc_threshold():
+    payload = make_reading("test-001", "sala", 2500, preventive_mode=True)
+    assert payload["adc"] == 2500
+    assert payload["estado"] == "alarma preventiva"
+
+
 def test_manual_alarm_overrides_baseline():
     rng = random.Random(25)
     values = [generate_adc(0, rng, manual_alarm=True) for _ in range(100)]
-    assert all(1501 <= value <= 4095 for value in values)
+    assert all(3000 <= value <= 4095 for value in values)
     assert all(make_reading("test-001", "sala", value)["estado"] == "alarma" for value in values)
 
 

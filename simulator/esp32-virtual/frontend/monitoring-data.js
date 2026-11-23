@@ -14,11 +14,16 @@
   }
 
   function countStates(nodes) {
-    const counts = { normal: 0, alarma: 0, sinLectura: 0 };
+    const counts = { normal: 0, alarma: 0, alertaPreventiva: 0, sinLectura: 0 };
     for (const node of nodes) {
       const state = node.last_reading?.estado;
       // Connectivity is deliberately independent of the last ADC state.
-      if (state === "normal" || state === "alarma") counts[state] += 1;
+      if (state === "normal") {
+        if (node.preventive_mode) counts.alertaPreventiva += 1;
+        else counts.normal += 1;
+      }
+      else if (state === "alarma") counts.alarma += 1;
+      else if (state === "alarma preventiva" || node.preventive_mode) counts.alertaPreventiva += 1;
       else counts.sinLectura += 1;
     }
     return counts;

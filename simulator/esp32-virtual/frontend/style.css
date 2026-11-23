@@ -36,6 +36,7 @@ h2 { font-size: 16px; font-weight: 650; letter-spacing: -.2px; }
 .badge.is-active { color: #1d4ed8; background: #eff6ff; }
 .badge.is-warning { color: var(--amber); background: #fcf1e4; }
 .badge.is-danger { color: var(--red); background: #fbecee; }
+.badge.is-preventive { color: #a33b00; background: #ffead8; }
 .page-header .badge { background: #253044; color: #cbd5e1; }
 .page-header .badge.is-active { color: #bfdbfe; background: #1e3a6a; }
 .page-header .badge.is-warning { color: #fcd08e; background: #463824; }
@@ -138,6 +139,7 @@ tbody th { font-weight: 500; }
 .legend-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; }
 .normal-dot { background: #16A34A; }
 .alarm-dot { background: #DC2626; }
+.preventive-dot { background: #b45309; }
 .unread-dot { background: #94A3B8; }
 .monitoring-note { font-size: 10px; color: var(--muted); margin: 10px 2px 0; line-height: 1.7; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }

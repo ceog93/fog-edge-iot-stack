@@ -31,6 +31,7 @@ class FakeClient:
         self.disconnects = 0
         self.publications = []
         self.availability_publications = []
+        self.subscriptions = []
         self.credentials = None
 
     def reconnect_delay_set(self, **kwargs):
@@ -58,6 +59,10 @@ class FakeClient:
 
     def loop_stop(self):
         self.stops += 1
+
+    def subscribe(self, topic, qos):
+        self.subscriptions.append((topic, qos))
+        return mqtt.MQTT_ERR_SUCCESS, 1
 
     def publish(self, topic, payload, qos, retain):
         if self.raise_publish:
@@ -139,9 +144,10 @@ def test_start_stop_restart_and_actual_publication_contract(mqtt_factory):
                 assert topic == f"simulacion/{body['device_id']}/telemetria"
                 assert body["simulado"] is True
                 assert body["estado"] == "alarma"
-                assert 1500 < body["adc"] <= 4095
+                assert 3000 <= body["adc"] <= 4095
                 assert qos == 0
                 assert retain is False
+                assert topic != "simulacion/alerta_temprana"
         assert api.post("/simulation/stop").status_code == 200
         assert api.post("/simulation/start").json()["running"] is True
         wait_until(lambda: sum(len(client.publications) for client in clients) > count)
@@ -253,6 +259,27 @@ def test_slow_mqtt_close_does_not_block_status_endpoint(mqtt_factory):
             assert pending.result(timeout=3).json()["status"] == "stopped"
 
 
+def test_early_warning_callback_ignores_origin_but_activates_other_nodes(mqtt_factory):
+    factory, clients = mqtt_factory
+    app = create_app(Settings(node_count=2), factory)
+    with TestClient(app) as api:
+        simulation = app.state.simulation
+        node_one, node_two = simulation.nodes
+
+        node_one._on_message(None, None, SimpleNamespace(payload=json.dumps({
+            "origen_device_id": node_one.device_id,
+        }).encode("utf-8")))
+        assert node_one.preventive_mode is False
+
+        node_two._on_message(None, None, SimpleNamespace(payload=json.dumps({
+            "origen_device_id": node_one.device_id,
+            "ubicacion": node_one.location,
+            "adc": 2800,
+            "tiempo_sostenido_ms": 5000,
+        }).encode("utf-8")))
+        assert node_two.preventive_mode is True
+
+
 def test_real_paho_clients_are_independent_without_connecting():
     # Exercises Paho construction/callback API without requiring a broker.
     simulation = Simulation(Settings(node_count=2))
@@ -290,7 +317,7 @@ def test_configure_start_and_polling_preserve_backend_state(mqtt_factory):
         wait_until(lambda: all(client.publications for client in clients))
         for client in clients:
             payload = json.loads(client.publications[-1][1])
-            assert 2500 < payload["adc"] <= 4095
+            assert 3000 <= payload["adc"] <= 4095
             assert payload["estado"] == "alarma"
         for _ in range(3):
             assert api.get("/status").json()["running"] is True
@@ -336,7 +363,7 @@ def test_running_configuration_is_immutable_but_identical_start_is_idempotent(mq
         state = api.post("/simulation/start", json={"node_count": 2, "interval_seconds": 0.03}).json()
         assert state["node_count"] == 2
         assert state["alarm_threshold"] == 1500
-        assert state["alarm_probability"] == 0.1
+        assert state["alarm_probability"] == 0.0
         assert all(client.starts == 1 for client in clients)
 
 

@@ -6,6 +6,7 @@ import logging
 import random
 import threading
 import uuid
+import time
 from collections.abc import Callable
 from dataclasses import replace
 
@@ -37,6 +38,9 @@ class VirtualNode:
         self._active = False
         self._connected = False
         self.manual_alarm = False
+        self.preventive_mode = False
+        self.preventive_origin_id = None
+        self.preventive_expires_at = 0.0
         self.generated = 0
         self.accepted = 0
         self.sent = 0
@@ -59,6 +63,7 @@ class VirtualNode:
         self.client.on_connect_fail = self._on_connect_fail
         self.client.on_disconnect = self._on_disconnect
         self.client.on_publish = self._on_publish
+        self.client.on_message = self._on_message
 
     def _error(self, message: str):
         with self._lock:
@@ -92,6 +97,9 @@ class VirtualNode:
             self._connected = self._active
             self.last_error = None
         self._publish_availability("conectado")
+        result, _ = client.subscribe("simulacion/alerta_temprana", qos=1)
+        if result != mqtt.MQTT_ERR_SUCCESS:
+            self._error(f"Suscripción a alerta temprana rechazada: {result}")
         logger.info("MQTT conectado node=%s client_id=%s", self.device_id, self.client_id)
 
     def _on_connect_fail(self, client, userdata):
@@ -107,6 +115,29 @@ class VirtualNode:
             self._error(f"MQTT desconectado: {reason_code}; reconexión automática")
         else:
             logger.info("MQTT desconectado node=%s", self.device_id)
+
+    def _on_message(self, client, userdata, message):
+        try:
+            payload = json.loads(message.payload.decode("utf-8"))
+            if not isinstance(payload, dict):
+                return
+            origin = payload.get("origen_device_id")
+            if origin == self.device_id:
+                return
+            if not origin:
+                return
+            with self._lock:
+                if origin == self.device_id:
+                    self.preventive_mode = False
+                    self.preventive_origin_id = origin
+                    self.preventive_expires_at = 0.0
+                    return
+                self.preventive_mode = True
+                self.preventive_origin_id = origin
+                self.preventive_expires_at = time.monotonic() + 1.5
+            logger.warning("Alerta preventiva activada node=%s origen=%s", self.device_id, origin)
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return
 
     def _on_publish(self, client, userdata, mid, reason_code, properties):
         if reason_code.is_failure:
@@ -149,15 +180,23 @@ class VirtualNode:
         try:
             with self._lock:
                 manual_alarm = self.manual_alarm
+                if self.preventive_expires_at and time.monotonic() >= self.preventive_expires_at:
+                    self.preventive_mode = False
+                    self.preventive_origin_id = None
+                    self.preventive_expires_at = 0.0
+                preventive_mode = self.preventive_mode
+            adc = generate_adc(
+                self.settings.alarm_probability,
+                self._rng,
+                self.settings.alarm_threshold,
+                manual_alarm,
+            )
             reading = make_reading(
                 self.device_id, self.location,
-                generate_adc(
-                    self.settings.alarm_probability,
-                    self._rng,
-                    self.settings.alarm_threshold,
-                    manual_alarm,
-                ),
+                adc,
                 self.settings.alarm_threshold,
+                preventive_mode,
+                manual_alarm,
             )
             with self._lock:
                 self.generated += 1
@@ -190,6 +229,8 @@ class VirtualNode:
                 "availability": self.availability,
                 "connected": self._connected,
                 "manual_alarm": self.manual_alarm,
+                "preventive_mode": self.preventive_mode,
+                "preventive_origin_id": self.preventive_origin_id,
                 "generated": self.generated,
                 "messages_accepted": self.accepted,
                 "messages_sent": self.sent,

@@ -149,8 +149,9 @@
       row.adc.textContent = node.last_reading ? formatNumber.format(node.last_reading.adc) : "—";
       row.adc.title = node.last_reading ? `Generada: ${node.last_reading.timestamp}` : "Aún no hay lecturas";
       const readingState = node.last_reading?.estado;
-      row.reading.textContent = readingState === "alarma" ? "Alarma" : readingState === "normal" ? "Normal" : "Sin lectura";
-      row.reading.className = `badge reading-status${readingState === "alarma" ? " is-danger" : readingState === "normal" ? " is-success" : ""}`;
+      const preventiveReading = Boolean(node.preventive_mode);
+      row.reading.textContent = readingState === "alarma" ? "Alarma" : preventiveReading || readingState === "alarma preventiva" ? "Alerta Preventiva" : readingState === "normal" ? "Normal" : "Sin lectura";
+      row.reading.className = `badge reading-status${readingState === "alarma" ? " is-danger" : preventiveReading || readingState === "alarma preventiva" ? " is-preventive" : readingState === "normal" ? " is-success" : ""}`;
       row.connection.textContent = node.connected ? "Conectado" : "Desconectado";
       row.connection.className = `connection-state${node.connected ? " is-connected" : ""}`;
       row.connection.title = node.last_error || "";

@@ -83,7 +83,7 @@
         }),
         states: new this.ChartClass(this.element("states-chart"), {
           type: "doughnut",
-          data: { labels: ["Normal", "Alarma", "Sin lectura"], datasets: [{ data: [], backgroundColor: [GREEN, RED, GRAY], borderWidth: 0, hoverOffset: 2 }] },
+          data: { labels: ["Normal", "Alarma", "Alerta Preventiva", "Sin lectura"], datasets: [{ data: [], backgroundColor: [GREEN, RED, "#b45309", GRAY], borderWidth: 0, hoverOffset: 2 }] },
           options: { responsive: true, maintainAspectRatio: false, animation: false, cutout: "76%", plugins: { legend: { display: false } } },
         }),
       };
@@ -137,7 +137,7 @@
       this.adcKey = key;
       const chart = this.charts.adc;
       chart.data.datasets[0].data = points;
-      chart.data.datasets[0].pointBackgroundColor = points.map((point) => point.estado === "alarma" ? RED : point.estado === "normal" ? GREEN : GRAY);
+      chart.data.datasets[0].pointBackgroundColor = points.map((point) => point.estado === "alarma" ? RED : point.estado === "alarma preventiva" ? "#b45309" : point.estado === "normal" ? GREEN : GRAY);
       const first = points[0]?.x;
       const last = points.at(-1)?.x;
       if (points.length) {
@@ -171,15 +171,16 @@
 
     renderStates() {
       const counts = this.history.states;
-      const values = [counts.normal, counts.alarma, counts.sinLectura];
+      const values = [counts.normal, counts.alarma, counts.alertaPreventiva || 0, counts.sinLectura];
       const total = values.reduce((sum, value) => sum + value, 0);
       this.element("states-normal").textContent = counts.normal;
       this.element("states-alarm").textContent = counts.alarma;
+      this.element("states-preventive").textContent = counts.alertaPreventiva || 0;
       this.element("states-unread").textContent = counts.sinLectura;
       this.element("states-total").textContent = total;
       this.element("states-empty").hidden = total > 0;
       this.element("states-visual").hidden = total === 0;
-      this.element("states-chart").setAttribute("aria-label", `${counts.normal} nodos normales, ${counts.alarma} en alarma y ${counts.sinLectura} sin lectura. Conectividad MQTT independiente.`);
+      this.element("states-chart").setAttribute("aria-label", `${counts.normal} nodos normales, ${counts.alarma} en alarma, ${counts.alertaPreventiva || 0} en alerta preventiva y ${counts.sinLectura} sin lectura. Conectividad MQTT independiente.`);
       const key = JSON.stringify(values);
       if (key === this.statesKey) return;
       this.statesKey = key;
