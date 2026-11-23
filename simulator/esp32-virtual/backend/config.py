@@ -17,7 +17,7 @@ class Settings:
     mqtt_password: str | None = field(default=None, repr=False)
     node_count: int = 10
     interval_seconds: float = 2.0
-    alarm_probability: float = 0.1
+    alarm_probability: float = 0.0
     alarm_threshold: int = 1500
     device_prefix: str = "esp32-virtual"
     location_prefix: str = "laboratorio"
@@ -51,7 +51,7 @@ class Settings:
             mqtt_password=os.getenv("MQTT_PASSWORD") or None,
             node_count=int(os.getenv("SIM_NODE_COUNT", "10")),
             interval_seconds=float(os.getenv("SIM_INTERVAL_SECONDS", "2")),
-            alarm_probability=float(os.getenv("SIM_ALARM_PROBABILITY", "0.1")),
+            alarm_probability=float(os.getenv("SIM_ALARM_PROBABILITY", "0")),
             alarm_threshold=int(os.getenv("SIM_ALARM_THRESHOLD", "1500")),
             device_prefix=os.getenv("SIM_DEVICE_PREFIX", "esp32-virtual"),
             location_prefix=os.getenv("SIM_LOCATION_PREFIX", "laboratorio"),

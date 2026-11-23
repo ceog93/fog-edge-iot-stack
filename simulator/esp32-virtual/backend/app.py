@@ -24,7 +24,7 @@ class SimulationParameters(BaseModel):
     node_count: int = Field(default=10, ge=1, le=MAX_NODE_COUNT)
     interval_seconds: float = Field(default=2, gt=0, le=MAX_INTERVAL_SECONDS)
     alarm_threshold: int = Field(default=1500, ge=0, le=4094)
-    alarm_probability: float = Field(default=0.1, ge=0, le=1)
+    alarm_probability: float = Field(default=0.0, ge=0, le=1)
 
 
 def create_app(settings: Settings | None = None, client_factory=None) -> FastAPI:

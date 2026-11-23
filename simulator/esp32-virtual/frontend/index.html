@@ -61,7 +61,7 @@
             </div>
             <div class="field">
               <label for="probability">Probabilidad de alarma</label>
-              <div class="input-wrap"><input id="probability" name="alarm_probability" type="number" min="0" max="100" step="any" value="10" required aria-describedby="probability-hint"><span>%</span></div>
+              <div class="input-wrap"><input id="probability" name="alarm_probability" type="number" min="0" max="100" step="any" value="0" required aria-describedby="probability-hint"><span>%</span></div>
               <small id="probability-hint">Por nodo y por lectura · 0–100 %</small>
             </div>
           </div>
@@ -141,6 +141,7 @@
           <ul class="state-legend" aria-label="Resumen de estados ADC">
             <li><span><i class="legend-dot normal-dot" aria-hidden="true"></i>Normal</span><b id="states-normal">—</b></li>
             <li><span><i class="legend-dot alarm-dot" aria-hidden="true"></i>Alarma</span><b id="states-alarm">—</b></li>
+            <li><span><i class="legend-dot preventive-dot" aria-hidden="true"></i>Alerta Preventiva</span><b id="states-preventive">—</b></li>
             <li><span><i class="legend-dot unread-dot" aria-hidden="true"></i>Sin lectura</span><b id="states-unread">—</b></li>
           </ul>
         </article>
