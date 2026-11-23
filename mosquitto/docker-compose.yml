@@ -1,0 +1,24 @@
+name: fog-mosquitto
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: mosquitto
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./config:/mosquitto/config
+      - ./data:/mosquitto/data
+      - ./log:/mosquitto/log
+    networks:
+      - fog_net
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_pub -h 127.0.0.1 -p 1883 -u \"603108MQTT_ESP32_USER\" -P \"603108MQTT_ESP32_PASS\" -t simulacion/health -m ok || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+networks:
+  fog_net:
+    external: true
