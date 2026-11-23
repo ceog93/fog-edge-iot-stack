@@ -1,0 +1,274 @@
+
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+mqtt:
+  sensor:
+    - name: "Nivel de Gas Cocina"
+      unique_id: "esp32_gas_001_ppm_manual"
+      state_topic: "casa/cocina/gas/valor"
+      availability_topic: "casa/cocina/gas/disponibilidad"
+      payload_available: "online"
+      payload_not_available: "offline"
+      unit_of_measurement: "ADC"
+      state_class: "measurement"
+      icon: "mdi:gas-cylinder"
+
+    - name: "ESP32 Virtual 001 ADC"
+      unique_id: esp32_virtual_001_adc
+      state_topic: "simulacion/esp32-virtual-001/telemetria"
+      value_template: "{{ value_json.adc }}"
+      unit_of_measurement: "ADC"
+      state_class: measurement
+
+    - name: "ESP32 Virtual 002 ADC"
+      unique_id: esp32_virtual_002_adc
+      state_topic: "simulacion/esp32-virtual-002/telemetria"
+      value_template: "{{ value_json.adc }}"
+      unit_of_measurement: "ADC"
+      state_class: measurement
+
+    - name: "ESP32 Virtual 003 ADC"
+      unique_id: esp32_virtual_003_adc
+      state_topic: "simulacion/esp32-virtual-003/telemetria"
+      value_template: "{{ value_json.adc }}"
+      unit_of_measurement: "ADC"
+      state_class: measurement
+
+    - name: "ESP32 Virtual 004 ADC"
+      unique_id: esp32_virtual_004_adc
+      state_topic: "simulacion/esp32-virtual-004/telemetria"
+      value_template: "{{ value_json.adc }}"
+      unit_of_measurement: "ADC"
+      state_class: measurement
+
+    - name: "ESP32 Virtual 005 ADC"
+      unique_id: esp32_virtual_005_adc
+      state_topic: "simulacion/esp32-virtual-005/telemetria"
+      value_template: "{{ value_json.adc }}"
+      unit_of_measurement: "ADC"
+      state_class: measurement
+
+    - name: "ESP32 Virtual 006 ADC"
+      unique_id: esp32_virtual_006_adc
+      state_topic: "simulacion/esp32-virtual-006/telemetria"
+      value_template: "{{ value_json.adc }}"
+      unit_of_measurement: "ADC"
+      state_class: measurement
+
+    - name: "ESP32 Virtual 007 ADC"
+      unique_id: esp32_virtual_007_adc
+      state_topic: "simulacion/esp32-virtual-007/telemetria"
+      value_template: "{{ value_json.adc }}"
+      unit_of_measurement: "ADC"
+      state_class: measurement
+
+    - name: "ESP32 Virtual 008 ADC"
+      unique_id: esp32_virtual_008_adc
+      state_topic: "simulacion/esp32-virtual-008/telemetria"
+      value_template: "{{ value_json.adc }}"
+      unit_of_measurement: "ADC"
+      state_class: measurement
+
+    - name: "ESP32 Virtual 009 ADC"
+      unique_id: esp32_virtual_009_adc
+      state_topic: "simulacion/esp32-virtual-009/telemetria"
+      value_template: "{{ value_json.adc }}"
+      unit_of_measurement: "ADC"
+      state_class: measurement
+
+    - name: "ESP32 Virtual 010 ADC"
+      unique_id: esp32_virtual_010_adc
+      state_topic: "simulacion/esp32-virtual-010/telemetria"
+      value_template: "{{ value_json.adc }}"
+      unit_of_measurement: "ADC"
+      state_class: measurement
+
+  binary_sensor:
+    - name: "Alarma de Gas Cocina"
+      unique_id: "esp32_gas_001_alerta_manual"
+      state_topic: "casa/cocina/gas/alarma"
+      availability_topic: "casa/cocina/gas/disponibilidad"
+      payload_available: "online"
+      payload_not_available: "offline"
+      payload_on: "ON"
+      payload_off: "OFF"
+      device_class: "gas"
+
+    - name: "ESP32 Virtual 001 Estado"
+      unique_id: esp32_virtual_001_estado
+      state_topic: "simulacion/esp32-virtual-001/telemetria"
+      value_template: "{{ value_json.estado }}"
+      payload_on: "alarma"
+      payload_off: "normal"
+      device_class: "gas"
+
+    - name: "ESP32 Virtual 002 Estado"
+      unique_id: esp32_virtual_002_estado
+      state_topic: "simulacion/esp32-virtual-002/telemetria"
+      value_template: "{{ value_json.estado }}"
+      payload_on: "alarma"
+      payload_off: "normal"
+      device_class: "gas"
+
+    - name: "ESP32 Virtual 003 Estado"
+      unique_id: esp32_virtual_003_estado
+      state_topic: "simulacion/esp32-virtual-003/telemetria"
+      value_template: "{{ value_json.estado }}"
+      payload_on: "alarma"
+      payload_off: "normal"
+      device_class: "gas"
+
+    - name: "ESP32 Virtual 004 Estado"
+      unique_id: esp32_virtual_004_estado
+      state_topic: "simulacion/esp32-virtual-004/telemetria"
+      value_template: "{{ value_json.estado }}"
+      payload_on: "alarma"
+      payload_off: "normal"
+      device_class: "gas"
+
+    - name: "ESP32 Virtual 005 Estado"
+      unique_id: esp32_virtual_005_estado
+      state_topic: "simulacion/esp32-virtual-005/telemetria"
+      value_template: "{{ value_json.estado }}"
+      payload_on: "alarma"
+      payload_off: "normal"
+      device_class: "gas"
+
+    - name: "ESP32 Virtual 006 Estado"
+      unique_id: esp32_virtual_006_estado
+      state_topic: "simulacion/esp32-virtual-006/telemetria"
+      value_template: "{{ value_json.estado }}"
+      payload_on: "alarma"
+      payload_off: "normal"
+      device_class: "gas"
+
+    - name: "ESP32 Virtual 007 Estado"
+      unique_id: esp32_virtual_007_estado
+      state_topic: "simulacion/esp32-virtual-007/telemetria"
+      value_template: "{{ value_json.estado }}"
+      payload_on: "alarma"
+      payload_off: "normal"
+      device_class: "gas"
+
+    - name: "ESP32 Virtual 008 Estado"
+      unique_id: esp32_virtual_008_estado
+      state_topic: "simulacion/esp32-virtual-008/telemetria"
+      value_template: "{{ value_json.estado }}"
+      payload_on: "alarma"
+      payload_off: "normal"
+      device_class: "gas"
+
+    - name: "ESP32 Virtual 009 Estado"
+      unique_id: esp32_virtual_009_estado
+      state_topic: "simulacion/esp32-virtual-009/telemetria"
+      value_template: "{{ value_json.estado }}"
+      payload_on: "alarma"
+      payload_off: "normal"
+      device_class: "gas"
+
+    - name: "ESP32 Virtual 010 Estado"
+      unique_id: esp32_virtual_010_estado
+      state_topic: "simulacion/esp32-virtual-010/telemetria"
+      value_template: "{{ value_json.estado }}"
+      payload_on: "alarma"
+      payload_off: "normal"
+      device_class: "gas"
+
+    - name: "Conexión ESP32 Cocina"
+      unique_id: "esp32_gas_001_conexion_manual"
+      state_topic: "casa/cocina/gas/disponibilidad"
+      payload_on: "online"
+      payload_off: "offline"
+      device_class: "connectivity"
+      entity_category: "diagnostic"
+
+    - name: "Conexión ESP32 Virtual 001"
+      unique_id: "esp32_virtual_001_conexion"
+      state_topic: "simulacion/esp32-virtual-001/estado"
+      payload_on: "conectado"
+      payload_off: "desconectado"
+      device_class: "connectivity"
+      entity_category: "diagnostic"
+
+    - name: "Conexión ESP32 Virtual 002"
+      unique_id: "esp32_virtual_002_conexion"
+      state_topic: "simulacion/esp32-virtual-002/estado"
+      payload_on: "conectado"
+      payload_off: "desconectado"
+      device_class: "connectivity"
+      entity_category: "diagnostic"
+
+    - name: "Conexión ESP32 Virtual 003"
+      unique_id: "esp32_virtual_003_conexion"
+      state_topic: "simulacion/esp32-virtual-003/estado"
+      payload_on: "conectado"
+      payload_off: "desconectado"
+      device_class: "connectivity"
+      entity_category: "diagnostic"
+
+    - name: "Conexión ESP32 Virtual 004"
+      unique_id: "esp32_virtual_004_conexion"
+      state_topic: "simulacion/esp32-virtual-004/estado"
+      payload_on: "conectado"
+      payload_off: "desconectado"
+      device_class: "connectivity"
+      entity_category: "diagnostic"
+
+    - name: "Conexión ESP32 Virtual 005"
+      unique_id: "esp32_virtual_005_conexion"
+      state_topic: "simulacion/esp32-virtual-005/estado"
+      payload_on: "conectado"
+      payload_off: "desconectado"
+      device_class: "connectivity"
+      entity_category: "diagnostic"
+
+    - name: "Conexión ESP32 Virtual 006"
+      unique_id: "esp32_virtual_006_conexion"
+      state_topic: "simulacion/esp32-virtual-006/estado"
+      payload_on: "conectado"
+      payload_off: "desconectado"
+      device_class: "connectivity"
+      entity_category: "diagnostic"
+
+    - name: "Conexión ESP32 Virtual 007"
+      unique_id: "esp32_virtual_007_conexion"
+      state_topic: "simulacion/esp32-virtual-007/estado"
+      payload_on: "conectado"
+      payload_off: "desconectado"
+      device_class: "connectivity"
+      entity_category: "diagnostic"
+
+    - name: "Conexión ESP32 Virtual 008"
+      unique_id: "esp32_virtual_008_conexion"
+      state_topic: "simulacion/esp32-virtual-008/estado"
+      payload_on: "conectado"
+      payload_off: "desconectado"
+      device_class: "connectivity"
+      entity_category: "diagnostic"
+
+    - name: "Conexión ESP32 Virtual 009"
+      unique_id: "esp32_virtual_009_conexion"
+      state_topic: "simulacion/esp32-virtual-009/estado"
+      payload_on: "conectado"
+      payload_off: "desconectado"
+      device_class: "connectivity"
+      entity_category: "diagnostic"
+
+    - name: "Conexión ESP32 Virtual 010"
+      unique_id: "esp32_virtual_010_conexion"
+      state_topic: "simulacion/esp32-virtual-010/estado"
+      payload_on: "conectado"
+      payload_off: "desconectado"
+      device_class: "connectivity"
+      entity_category: "diagnostic"
+
+    
