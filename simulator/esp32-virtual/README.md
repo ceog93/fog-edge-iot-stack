@@ -222,9 +222,14 @@ sirven para un broker de pruebas que sí requiera autenticación.
 
 ## Contrato MQTT y verificación
 
-Único tópico publicado por cada nodo: `simulacion/{device_id}/telemetria`.
+Tópico de telemetría publicado por cada nodo: `simulacion/{device_id}/telemetria`.
 MQTT 3.1.1, QoS 0 y `retain=false`. El simulador no se suscribe a comandos ni
 publica hacia actuadores. No hay puentes al broker principal.
+
+Cada nodo también publica disponibilidad retenida en `simulacion/{device_id}/estado`,
+QoS 1: `conectado` al establecer la sesión MQTT y `desconectado` al detenerse.
+No usa LWT: el estado se controla únicamente por el inicio y la parada explícita
+de la simulación.
 
 Ejemplo ilustrativo de mensaje:
 

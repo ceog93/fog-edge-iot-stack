@@ -29,6 +29,9 @@ class VirtualNode:
         # Unique even if a second simulator uses the same device prefix.
         self.client_id = f"sim-{uuid.uuid4().hex}"
         self.topic = f"simulacion/{self.device_id}/telemetria"
+        self.availability_topic = f"simulacion/{self.device_id}/estado"
+        self.availability = "desconectado"
+        self._availability_mids = set()
         self._rng = random.Random()
         self._lock = threading.RLock()
         self._active = False
@@ -63,6 +66,22 @@ class VirtualNode:
             self.last_error = message
         logger.error("node=%s %s", self.device_id, message)
 
+    def _publish_availability(self, status: str):
+        with self._lock:
+            self.availability = status
+        info = self.client.publish(
+            self.availability_topic,
+            payload=status,
+            qos=1,
+            retain=True,
+        )
+        if info.rc == mqtt.MQTT_ERR_SUCCESS:
+            with self._lock:
+                self._availability_mids.add(info.mid)
+            logger.info("Disponibilidad MQTT aceptada node=%s topic=%s payload=%s", self.device_id, self.availability_topic, status)
+        else:
+            self._error(f"Publicación de disponibilidad rechazada: {info.rc}")
+
     def _on_connect(self, client, userdata, flags, reason_code, properties):
         if reason_code.is_failure:
             with self._lock:
@@ -72,6 +91,7 @@ class VirtualNode:
         with self._lock:
             self._connected = self._active
             self.last_error = None
+        self._publish_availability("conectado")
         logger.info("MQTT conectado node=%s client_id=%s", self.device_id, self.client_id)
 
     def _on_connect_fail(self, client, userdata):
@@ -93,6 +113,10 @@ class VirtualNode:
             self._error(f"Envío MQTT fallido: {reason_code}")
             return
         with self._lock:
+            if mid in self._availability_mids:
+                self._availability_mids.remove(mid)
+                logger.info("Disponibilidad MQTT confirmada node=%s mid=%s", self.device_id, mid)
+                return
             self.sent += 1
         logger.info("MQTT enviado node=%s mid=%s", self.device_id, mid)
 
@@ -108,6 +132,7 @@ class VirtualNode:
         with self._lock:
             self._active = False
         try:
+            self._publish_availability("desconectado")
             self.client.disconnect()
         finally:
             try:
@@ -161,6 +186,8 @@ class VirtualNode:
                 "ubicacion": self.location,
                 "client_id": self.client_id,
                 "topic": self.topic,
+                "availability_topic": self.availability_topic,
+                "availability": self.availability,
                 "connected": self._connected,
                 "manual_alarm": self.manual_alarm,
                 "generated": self.generated,
@@ -228,6 +255,10 @@ class Simulation:
                 # connect_async + Paho network threads: no DNS/socket waits on the API loop.
                 for node in self.nodes:
                     await asyncio.to_thread(node.start)
+                await asyncio.sleep(0.1)
+                for node in self.nodes:
+                    if node._connected:
+                        node._publish_availability("conectado")
             except Exception:
                 await self._close_clients()
                 self.state = "stopped"

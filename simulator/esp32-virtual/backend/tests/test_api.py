@@ -30,6 +30,7 @@ class FakeClient:
         self.stops = 0
         self.disconnects = 0
         self.publications = []
+        self.availability_publications = []
         self.credentials = None
 
     def reconnect_delay_set(self, **kwargs):
@@ -63,9 +64,14 @@ class FakeClient:
             raise OSError("test socket error")
         if self.publish_rc != mqtt.MQTT_ERR_SUCCESS:
             return SimpleNamespace(rc=self.publish_rc)
-        self.publications.append((topic, payload, qos, retain))
-        self.on_publish(self, None, len(self.publications), SUCCESS, None)
-        return SimpleNamespace(rc=mqtt.MQTT_ERR_SUCCESS)
+        if topic.endswith("/estado"):
+            self.availability_publications.append((topic, payload, qos, retain))
+            mid = 100000 + len(self.availability_publications)
+        else:
+            self.publications.append((topic, payload, qos, retain))
+            mid = len(self.publications)
+            self.on_publish(self, None, mid, SUCCESS, None)
+        return SimpleNamespace(rc=mqtt.MQTT_ERR_SUCCESS, mid=mid)
 
 
 @pytest.fixture
